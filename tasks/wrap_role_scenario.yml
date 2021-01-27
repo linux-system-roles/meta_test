@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: MIT
+---
+
+- assert:
+    that:
+      - meta_test_scenario.role_name | default("") | length > 0
+    fail_msg: "Required 'meta_test_scenario.role_name' parameter."
+
+- assert:
+    that: not (
+        ( meta_test_scenario.test_checkmode | default(false) ) and
+        ( meta_test_scenario.test_idempotency | default(false) )
+      )
+    fail_msg: >
+      'meta_test_scenario.test_checkmode' and
+      'meta_test_scenario.test_idempotency' are both set.
+
+- name: Create a temporary file for a static inventory
+  tempfile:
+    state: file
+    suffix: .inventory.yml
+  register: __meta_test_tempinventory
+  changed_when: false
+  delegate_to: localhost
+
+- name: Create a static inventory from hostvars
+  template:
+    src: inventory.yml.j2
+    dest: "{{ __meta_test_tempinventory.path }}"
+  changed_when: false
+  delegate_to: localhost
+  when:
+    - __meta_test_tempinventory is defined
+    - __meta_test_tempinventory.path is defined
+
+- block:
+    - name: Import role {{ meta_test_scenario.role_name }}
+      import_role:
+        name: "{{ meta_test_scenario.role_name }}"
+
+    - name: >
+        Import role {{ meta_test_scenario.role_name }} via fresh Ansible
+        instance with check mode enabled
+      command: >
+        ansible all -vv -i {{ __meta_test_tempinventory.path }} --check
+          -m import_role -a "name={{ meta_test_scenario.role_name }}"
+      changed_when: false
+      delegate_to: localhost
+      when:
+        - __meta_test_tempinventory is defined
+        - __meta_test_tempinventory.path is defined
+        - meta_test_scenario.test_checkmode | default(false)
+
+    - name: Update static inventory with recent hostvars
+      template:
+        src: inventory.yml.j2
+        dest: "{{ __meta_test_tempinventory.path }}"
+      changed_when: false
+      delegate_to: localhost
+      when:
+        - __meta_test_tempinventory is defined
+        - __meta_test_tempinventory.path is defined
+        - meta_test_scenario.test_idempotency | default(false)
+
+    - name: >
+        Import role {{ meta_test_scenario.role_name }} via fresh Ansible
+        instance
+      command: >
+        ansible all -vv -i {{ __meta_test_tempinventory.path }} -m import_role
+          -a "name={{ meta_test_scenario.role_name }}"
+      register: __meta_test_ansible_output
+      changed_when: false
+      delegate_to: localhost
+      when:
+        - __meta_test_tempinventory is defined
+        - __meta_test_tempinventory.path is defined
+        - meta_test_scenario.test_idempotency | default(false)
+
+    - name: Check the idempotency
+      assert:
+        that:
+          - __meta_test_ansible_output.stdout.find('| CHANGED => {\n') == -1
+        fail_msg: >
+          Idempotency test failed. Output: {{
+          __meta_test_ansible_output.stdout_lines }}
+      changed_when: false
+      delegate_to: localhost
+      when:
+        - __meta_test_ansible_output is defined
+        - __meta_test_ansible_output.stdout is defined
+        - meta_test_scenario.test_idempotency | default(false)
+
+  always:
+    - name: Remove the temporary file
+      file:
+        path: "{{ __meta_test_tempinventory.path }}"
+        state: absent
+      changed_when: false
+      delegate_to: localhost
+      when:
+        - __meta_test_tempinventory is defined
+        - __meta_test_tempinventory.path is defined

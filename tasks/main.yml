@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+---
+
+- assert:
+    that:
+      - meta_test_scenario.name is defined
+    fail_msg: "'meta_test_scenario.name' must be defined."
+  when:
+    - meta_test_scenario | default(false, true)
+
+- include_tasks: "{{ meta_test_scenario.name }}_scenario.yml"
+  when:
+    - meta_test_scenario | default(false, true)

@@ -1,0 +1,7 @@
+{{
+  generate_inventory(
+    hostvars.keys(), vars,
+    meta_test_scenario.role_name,
+    ( meta_test_scenario.extra_vars | default([], true) )
+  ) | to_yaml
+}}
