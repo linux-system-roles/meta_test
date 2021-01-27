@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 ---
 
-- assert:
+- name: Check that the scenario name is defined
+  assert:
     that:
       - meta_test_scenario.name is defined
     fail_msg: "'meta_test_scenario.name' must be defined."

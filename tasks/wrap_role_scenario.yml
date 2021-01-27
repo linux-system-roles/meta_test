@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: MIT
 ---
 
-- assert:
+- name: Check that all required parameters are given
+  assert:
     that:
       - meta_test_scenario.role_name | default("") | length > 0
     fail_msg: "Required 'meta_test_scenario.role_name' parameter."
 
-- assert:
+- name: Check that parameters are set properly
+  assert:
     that: not (
         ( meta_test_scenario.test_checkmode | default(false) ) and
         ( meta_test_scenario.test_idempotency | default(false) )
@@ -27,11 +29,29 @@
   template:
     src: inventory.yml.j2
     dest: "{{ __meta_test_tempinventory.path }}"
+    mode: 0644
   changed_when: false
   delegate_to: localhost
   when:
     - __meta_test_tempinventory is defined
     - __meta_test_tempinventory.path is defined
+
+- name: Read the static inventory content
+  slurp:
+    src: "{{ __meta_test_tempinventory.path }}"
+  delegate_to: localhost
+  register: __meta_test_inventory_content
+  when:
+    - meta_test_debug
+    - __meta_test_tempinventory is defined
+    - __meta_test_tempinventory.path is defined
+
+- name: Show the static inventory content
+  debug:
+    msg: "{{ __meta_test_inventory_content.content | b64decode }}"
+  when:
+    - __meta_test_inventory_content is defined
+    - __meta_test_inventory_content.content is defined
 
 - block:
     - name: Import role {{ meta_test_scenario.role_name }}
@@ -55,6 +75,7 @@
       template:
         src: inventory.yml.j2
         dest: "{{ __meta_test_tempinventory.path }}"
+        mode: 0644
       changed_when: false
       delegate_to: localhost
       when:

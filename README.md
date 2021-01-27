@@ -10,15 +10,21 @@ section.
 
 ## Role Variables
 
-There is just one variable so far, `meta_test_scenario`, which is a dictionary
-containing a scenario name and additional scenario parameters. A scenario name
-is stored under the key `name` of the dictionary and it is mandatory. At this
-moment, there are supported these scenarios:
+There are only two variables used to control the role's behavior.
+
+The first one, `meta_test_scenario`, is a dictionary containing a scenario name
+and additional scenario parameters. A scenario name is stored under the key
+`name` of the dictionary and it is mandatory. At this moment, these scenarios
+are supported:
 
 * `wrap_role`
 
 The default value of `meta_test_scenario` variable is `null`, which means that
 no actions are taken.
+
+The second variable is `meta_test_debug`, implicitly set to `false`. This
+variable tell the role to print additional information. It is mostly used for
+debugging the role itself when things are not working as supposed to be.
 
 ### `wrap_role`
 

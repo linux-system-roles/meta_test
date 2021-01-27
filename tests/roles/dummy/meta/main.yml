@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MIT
+---
+
+galaxy_info:
+  author: Jiri Kucera <jkucera@redhat.com>
+  description: Dummy Ansible role used for testing and debugging
+  company: Red Hat, Inc.
+  license: MIT
+
+  min_ansible_version: 2.7
+
+  platforms:
+    - name: Fedora
+      versions:
+        - all
+    - name: EL
+      versions:
+        - all
+
+  galaxy_tags:
+    - debugging
+    - dummy
+    - testing
