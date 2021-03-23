@@ -9,7 +9,7 @@
   changed_when: false
   delegate_to: localhost
   when:
-    - dummy_statefile | defined(false, true)
+    - dummy_statefile | default(false, true)
 
 - name: Read the state file content
   set_fact:
@@ -17,7 +17,7 @@
   changed_when: false
   delegate_to: localhost
   when:
-    - dummy_statefile | defined(false, true)
+    - dummy_statefile | default(false, true)
 
 - name: Record we visited the state file
   copy:
@@ -47,14 +47,30 @@
     - __dummy_statefile_content is defined
     - __dummy_statefile_content.find('visited') < 0
 
-- name: Display facts and variables on second pass
+- name: Display ansible_facts on second pass
   debug:
-    var: "{{ item }}"
-  loop:
-    - ansible_facts
-    - ansible_distribution
-    - __dummy_fact
-    - __dummy_register
+    var: ansible_facts
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') >= 0
+
+- name: Display ansible_distribution on second pass
+  debug:
+    var: ansible_distribution
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') >= 0
+
+- name: Display __dummy_fact on second pass
+  debug:
+    var: __dummy_fact
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') >= 0
+
+- name: Display __dummy_register on second pass
+  debug:
+    var: __dummy_register
   when:
     - __dummy_statefile_content is defined
     - __dummy_statefile_content.find('visited') >= 0

@@ -38,4 +38,4 @@ class FilterModule(object):
                 user_vars[v] = variables[v]
 
         # And distribute them across all hosts:
-        return {"all": dict([(h, user_vars) for h in hostvars])}
+        return {"all": {"hosts": dict([(h, user_vars) for h in hostvars])}}

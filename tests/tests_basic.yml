@@ -9,10 +9,9 @@
       name: wrap_role
       role_name: dummy
       extra_vars:
-        # Try to override these
-        ansible_facts:
-          distribution: "CoolLinuxDistro"
-        ansible_distribution: "CoolLinuxDistro"
+        - ansible_facts
+        - ansible_distribution
+        - __tests_basic_state_file
       test_checkmode: "{{ test_checkmode | d(False) }}"
       test_idempotency: "{{ test_idempotency | d(False) }}"
 
