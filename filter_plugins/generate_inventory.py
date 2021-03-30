@@ -1,5 +1,33 @@
 # SPDX-License-Identifier: MIT
 
+CONNECTION_VARS = (
+    # Connection (general):
+    "ansible_connection",
+    "ansible_host",
+    "ansible_port",
+    "ansible_user",
+    "ansible_password",
+    # Connection (SSH):
+    "ansible_ssh_private_key_file",
+    "ansible_ssh_common_args",
+    "ansible_sftp_extra_args",
+    "ansible_scp_extra_args",
+    "ansible_ssh_extra_args",
+    "ansible_ssh_pipelining",
+    "ansible_ssh_executable",
+    # Privilege escalation:
+    "ansible_become",
+    "ansible_become_method",
+    "ansible_become_user",
+    "ansible_become_password",
+    "ansible_become_exe",
+    "ansible_become_flags",
+    # Remote host environment parameters:
+    "ansible_shell_type",
+    "ansible_python_interpreter",
+    "ansible_shell_executable",
+)
+
 
 class FilterModule(object):
     """Custom Ansible filter for generating static inventory."""
@@ -37,5 +65,15 @@ class FilterModule(object):
             if v.startswith(rv_prefix) or v.startswith(prv_prefix) or v in extra_vars:
                 user_vars[v] = variables[v]
 
-        # And distribute them across all hosts:
-        return {"all": {"hosts": dict([(h, user_vars) for h in hostvars])}}
+        # Prepare host variables:
+        host_vars = {}
+        for host in hostvars:
+            host_vars[host] = {}
+            # Copy connection variables:
+            for connvar in CONNECTION_VARS:
+                if connvar in hostvars[host]:
+                    host_vars[host][connvar] = hostvars[host][connvar]
+            # Merge user_vars in:
+            host_vars[host].update(user_vars)
+
+        return {"all": {"hosts": host_vars}}
