@@ -1,4 +1,8 @@
+#!/usr/bin/python
 # SPDX-License-Identifier: MIT
+
+from __future__ import absolute_import
+__metaclass__ = type
 
 from ansible import context
 from ansible.errors import AnsibleActionFail
@@ -71,21 +75,22 @@ def run_role(inventory_file, role_name, check=False, verbosity=2):
     return tqm._stats
 
 
+def update_result(result, failed, msg, *args):
+    result["failed"] = failed
+    result["msg"] = msg % args
+
+
+def failed(result, msg, *args):
+    update_result(result, True, msg, *args)
+    return result
+
+
+def succeed(result, msg, *args):
+    update_result(result, False, msg, *args)
+    return result
+
+
 class ActionModule(ActionBase):
-    """
-    Run Ansible role in a fresh instance of Ansible.
-
-    How to use in playbook::
-
-        run_ansible_role:
-          name: "a role name (required)"
-          inventory: "a path to the static inventory file (required)"
-          # When true, the role is run in check mode. When false, idempotence
-          # is tested. This parameter is optional (default: false).
-          check: true
-          # Verbosity level. This parameter is optional (default: 2).
-          verbosity: 3
-    """
 
     def run(self, tmp=None, task_vars=None):
         module_args = self._task.args.copy()
@@ -99,22 +104,22 @@ class ActionModule(ActionBase):
         if inventory_file is None:
             raise AnsibleActionFail("missing required parameter: inventory")
 
-        result = run_role(inventory_file, role_name, check, verbosity)
-        if result is None:
-            return dict(failed=True, msg="Fatal error.")
+        msg_template = "%s check of role '%s' %%s." % (
+            "Check mode" if check else "Idempotence", role_name
+        )
+        play_recap = {}
+        result = dict(failed=False, msg="", play_recap=play_recap)
 
-        stats = {}
+        stats = run_role(inventory_file, role_name, check, verbosity)
+        if stats is None:
+            return failed(result, "Fatal error.")
+
         for stats_name in STATS_NAMES:
-            state = getattr(result, stats_name, None)
+            state = getattr(stats, stats_name, None)
             if state is not None:
-                stats[stats_name] = sum([count for _, count in state.items()])
+                play_recap[stats_name] = sum([count for _, count in state.items()])
 
-        check_msg = "Check mode" if check else "Idempotence"
-        if (not check and stats.get("changed")) or stats.get("failures"):
-            failed = True
-            msg = "%s check of role '%s' failed." % (check_msg, role_name)
-        else:
-            failed = False
-            msg = "%s check of role '%s' OK." % (check_msg, role_name)
+        if (not check and play_recap.get("changed")) or play_recap.get("failures"):
+            return failed(result, msg_template, "failed")
 
-        return dict(failed=failed, msg=msg, second_run_stats=stats)
+        return succeed(result, msg_template, "OK")
