@@ -134,3 +134,4 @@ both.
 ## Authors
 
 * Jiří Kučera <jkucera AT redhat.com>
+* Sergio Oliveira <seocam AT seocam.com>

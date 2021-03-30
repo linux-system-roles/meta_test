@@ -61,9 +61,10 @@
     - name: >
         Import role {{ meta_test_scenario.role_name }} via fresh Ansible
         instance with check mode enabled
-      command: >
-        ansible all -vv -i {{ __meta_test_tempinventory.path }} --check
-          -m import_role -a "name={{ meta_test_scenario.role_name }}"
+      run_ansible_role:
+        name: "{{ meta_test_scenario.role_name }}"
+        inventory: "{{ __meta_test_tempinventory.path }}"
+        check: true
       changed_when: false
       delegate_to: localhost
       when:
@@ -86,29 +87,14 @@
     - name: >
         Import role {{ meta_test_scenario.role_name }} via fresh Ansible
         instance
-      command: >
-        ansible all -vv -i {{ __meta_test_tempinventory.path }} -m import_role
-          -a "name={{ meta_test_scenario.role_name }}"
-      register: __meta_test_ansible_output
+      run_ansible_role:
+        name: "{{ meta_test_scenario.role_name }}"
+        inventory: "{{ __meta_test_tempinventory.path }}"
       changed_when: false
       delegate_to: localhost
       when:
         - __meta_test_tempinventory is defined
         - __meta_test_tempinventory.path is defined
-        - meta_test_scenario.test_idempotency | default(false)
-
-    - name: Check the idempotency
-      assert:
-        that:
-          - __meta_test_ansible_output.stdout.find('| CHANGED => {\n') == -1
-        fail_msg: >
-          Idempotency test failed. Output: {{
-          __meta_test_ansible_output.stdout_lines }}
-      changed_when: false
-      delegate_to: localhost
-      when:
-        - __meta_test_ansible_output is defined
-        - __meta_test_ansible_output.stdout is defined
         - meta_test_scenario.test_idempotency | default(false)
 
   always:
