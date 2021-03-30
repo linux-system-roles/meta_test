@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: MIT
+---
+
+- name: Touch the state file
+  file:
+    path: "{{ dummy_statefile }}"
+    state: touch
+    mode: 0644
+  changed_when: false
+  delegate_to: localhost
+  when:
+    - dummy_statefile | default(false, true)
+
+- name: Read the state file content
+  set_fact:
+    __dummy_statefile_content: "{{ lookup('file', dummy_statefile) }}"
+  changed_when: false
+  delegate_to: localhost
+  when:
+    - dummy_statefile | default(false, true)
+
+- name: Record we visited the state file
+  copy:
+    dest: "{{ dummy_statefile }}"
+    content: "visited"
+    mode: 0644
+  changed_when: false
+  delegate_to: localhost
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') < 0
+
+- name: Set dummy fact on first pass
+  set_fact:
+    __dummy_fact: "Dummy fact"
+  changed_when: false
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') < 0
+
+- name: Create dummy registered variable on first pass
+  command:
+    cmd: echo Dummy registered variable
+  changed_when: false
+  register: __dummy_register
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') < 0
+
+- name: Display ansible_facts on second pass
+  debug:
+    var: ansible_facts
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') >= 0
+
+- name: Display ansible_distribution on second pass
+  debug:
+    var: ansible_distribution
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') >= 0
+
+- name: Display __dummy_fact on second pass
+  debug:
+    var: __dummy_fact
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') >= 0
+
+- name: Display __dummy_register on second pass
+  debug:
+    var: __dummy_register
+  when:
+    - __dummy_statefile_content is defined
+    - __dummy_statefile_content.find('visited') >= 0

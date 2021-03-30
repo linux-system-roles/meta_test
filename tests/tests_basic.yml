@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MIT
+---
+
+- name: Test basic functionality on dummy role
+  hosts: all
+  vars:
+    meta_test_debug: true
+    meta_test_scenario:
+      name: wrap_role
+      role_name: dummy
+      extra_vars:
+        - ansible_facts
+        - ansible_distribution
+        - __tests_basic_state_file
+      test_checkmode: "{{ test_checkmode | d(False) }}"
+      test_idempotency: "{{ test_idempotency | d(False) }}"
+
+  tasks:
+    - name: Create a temporary file for state recording on control node
+      tempfile:
+        state: file
+        suffix: .state.dummy
+      register: __tests_basic_state_file
+      changed_when: false
+      delegate_to: localhost
+
+    - name: Check the state file path
+      assert:
+        that:
+          - __tests_basic_state_file is defined
+          - __tests_basic_state_file.path is defined
+        fail_msg: "Path to state file is unknown"
+
+    - block:
+        - name: Import linux-system-roles.meta_test role
+          import_role:
+            name: linux-system-roles.meta_test
+          vars:
+            dummy_statefile: "{{ __tests_basic_state_file.path }}"
+
+      always:
+        - name: Remove the state file
+          file:
+            path: "{{ __tests_basic_state_file.path }}"
+            state: absent
+          changed_when: false
+          delegate_to: localhost
+          when:
+            - __tests_basic_state_file is defined
+            - __tests_basic_state_file.path is defined
