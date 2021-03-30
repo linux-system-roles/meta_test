@@ -5,7 +5,7 @@
 # MIT (see LICENSE)
 # SPDX-License-Identifier: MIT
 
-# This module is a documentation stub and its purpose it also to satisfy
+# This module is a documentation stub and its purpose is also to satisfy
 # ansible-lint. All the work is done via eponymous action plugin.
 
 DOCUMENTATION = r"""
