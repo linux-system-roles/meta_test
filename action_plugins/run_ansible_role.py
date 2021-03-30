@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 from __future__ import absolute_import
+
 __metaclass__ = type
 
 from ansible import context
@@ -91,7 +92,6 @@ def succeed(result, msg, *args):
 
 
 class ActionModule(ActionBase):
-
     def run(self, tmp=None, task_vars=None):
         module_args = self._task.args.copy()
         role_name = module_args.get("name")
@@ -105,7 +105,8 @@ class ActionModule(ActionBase):
             raise AnsibleActionFail("missing required parameter: inventory")
 
         msg_template = "%s check of role '%s' %%s." % (
-            "Check mode" if check else "Idempotence", role_name
+            "Check mode" if check else "Idempotence",
+            role_name,
         )
         play_recap = {}
         result = dict(failed=False, msg="", play_recap=play_recap)
